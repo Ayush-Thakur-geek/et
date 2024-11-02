@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en" th:replace="~{base :: parent(~{:: #content}, ~{:: title}, ~{:: script})}">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <style>
+        #from-suggestions.autocomplete-result,
+        #to-suggestions.autocomplete-result {
+            background-color: white !important;  /* Ensure background is visible */
+            border: 1px solid #ccc;
+            max-height: 150px;
+            overflow-y: auto;
+            padding: 5px;
+            position: absolute; /* Position the suggestions dropdown correctly */
+            z-index: 1000; /* Ensure it appears on top of other elements */
+        }
+
+        .ui-datepicker {
+            background-color: white !important; /* Force the background for datepicker */
+            border: 1px solid #ccc;
+            z-index: 1000; /* Ensure it appears on top */
+            position: relative; /* Keep relative positioning for layout */
+        }
+    </style>
+</head>
+<body>
+<div id="content">
+    <div id="container">
+        <div id="top" class="flex justify-center items-center">
+            <div id="img" class="relative h-1/2-screen flex justify-center items-center" style="height: 45vh; width: 100vw">
+                <img class="w-full h-full object-cover relative" th:src="@{/images/landscape2.jpg}" alt="Plane" style="object-fit: cover">
+            </div>
+            <div id="flight-search" class="w-25 absolute">
+                <h1 class="text-5xl flex justify-center items-center font-semibold text-teal-250 dark:text-white pb-3" style="color: aquamarine">Search for Flights... <i class="fa-solid fa-plane" style="color: #63E6BE;"></i></h1>
+                <form class="w-full flex flex-col justify-between items-center pl-1 pr-1 space-y-4" method="post" data-th-object="${flightForm}" data-th-action="@{/user/dashboard/flightOffers}">
+                    <label for="from-search" class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
+                    <div class="relative w-full">
+                        <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+                            </svg>
+                        </div>
+                        <input th:field="*{from}" type="search" id="from-search" class="block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="From" required />
+                        <ul id="from-suggestions" class="autocomplete-result"></ul>
+                    </div>
+                    <label for="to-search" class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
+                    <div class="relative w-full">
+                        <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+                            </svg>
+                        </div>
+                        <input th:field="*{to}" type="search" id="to-search" class="block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="To" required />
+                        <ul id="to-suggestions" class="autocomplete-result"></ul>
+                    </div>
+
+                    <div class="flex justify-between items-center w-full">
+                        <input th:field="*{passengerCount}" type="number" class="relative w-1/2 h-5 border border-gray-300 rounded-lg mr-0.5" style="height: 3.25rem; margin-right: 40px" placeholder="No. of passengers" min="1">
+                        <select th:field="*{travelClass}" name="class" id="class" class="block ml-0.5 w-1/2 p-4 text-sm text-gray-900 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                            <option value="ECONOMY">ECONOMY</option>
+                            <option value="BUSINESS">BUSINESS</option>
+                            <option value="PREMIUM_ECONOMY">PREMIUM_ECONOMY</option>
+                            <option value="FIRST">FIRST</option>
+                        </select>
+
+                    </div>
+
+                    <!-- Datepicker input -->
+                    <input th:field="*{departureDate}" type="text" id="datepicker" class="ui-datepicker block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Select Date" />
+                    <input type="hidden" name="page" id="page" value="0">
+                    <input type="hidden" name="size" id="size" value="10">
+                    <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-md px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Search</button>
+                </form>
+            </div>
+        </div>
+        <div id="bottom" class="pt-3" style="padding-top: 20px">
+
+            <div th:if="${flightOffers}" id="flights" class="flex flex-col justify-center items-center">
+
+                <div class="relative overflow-x-auto shadow-md sm:rounded-lg" style="width: 70%">
+                    <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">
+                                Flight Number
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                Airline
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                Departure Time
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                Arrival Time
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                Duration
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                Seats Available
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                Price($)
+                            </th>
+
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="flight, iterStat : ${flightOffers}" class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
+                            <th th:text="${flight.itineraries[0].segments[0].number}" scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                Flight Number
+                            </th>
+                            <td th:text="${flight.validatingAirlineCodes[0]}" class="px-6 py-4">
+                                Airlines
+                            </td>
+                            <td th:text="${flight.itineraries[0].segments[0].departure.at}" class="px-6 py-4">
+                                Departure Time
+                            </td>
+                            <td th:text="${flight.itineraries[0].segments[0].arrival.at}" class="px-6 py-4">
+                                Arrival Time
+                            </td>
+                            <td th:text="${flight.itineraries[0].duration}" class="px-6 py-4">
+                                Duration
+                            </td>
+                            <td th:text="${flight.numberOfBookableSeats}" class="px-6 py-4">
+                                Available Seats
+                            </td>
+                            <td th:text="${flight.price.total}" class="px-6 py-4">
+                                Price
+                            </td>
+                            <td class="px-6 py-4">
+                                <form id="confirmPriceForm" method="post" th:action="@{/user/dashboard/confirmPrice}">
+                                    <input type="hidden" name="flightOffer" th:value="${flightOffersJson[iterStat.index]}" />
+                                    <button type="submit" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Book</button>
+                                </form>
+                            </td>
+                        </tr>
+
+                        </tbody>
+                    </table>
+                    <div class="w-full flex justify-center items-center">
+                        <nav aria-label="Page navigation example">
+                            <ul class="inline-flex -space-x-px text-sm">
+                                <li data-th-unless="${flightOffers.isFirst()}">
+                                    <a data-th-href="@{'flightOffers?size=' + ${pageSize} + '&page=' + ${flightOffers.number-1}}" class="flex items-center justify-center px-3 h-8 ms-0 leading-tight text-gray-500 bg-white border border-e-0 border-gray-300 rounded-s-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">Previous</a>
+                                </li>
+                                <li data-th-each="index : ${#numbers.sequence(1, flightOffers.totalPages)}">
+                                    <a data-th-href="@{'flightOffers?size=' + ${pageSize} + '&page=' + ${index-1}}" class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"><span data-th-text="${index}">1</span></a>
+                                </li>
+
+                                <li data-th-unless="${flightOffers.isLast()}">
+                                    <a data-th-href="@{'flightOffers?size=' + ${pageSize} + '&page=' + ${flightOffers.number+1}}" class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">Next</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+
+            </div>
+            <div id="suggestions" style="padding-top: 20px; overflow-x: auto">
+                <h1 class="text-5xl flex justify-center items-center font-semibold text-teal-250 dark:text-white pb-3" style="color: rgb(26 86 219)">Popular Destinations</h1>
+                <div id="recommendations" class="flex" style="display: flex; overflow-x: auto; padding: 50px; width: 100%; box-sizing: border-box;">
+
+
+                    <div class="max-w-sm bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700" style="flex: 0 0 auto; margin-right: 30px;">
+                        <a href="#">
+                            <img class="rounded-t-lg" th:src="@{/images/paris.jpg}" alt="" />
+                        </a>
+                        <div class="p-5">
+                            <a href="#">
+                                <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Paris</h5>
+                            </a>
+                            <p class="mb-3 font-normal text-gray-700 dark:text-gray-400">Paris enchants with its iconic Eiffel Tower, charming streets, and historic beauty. The Seine glistens under city lights, while art, architecture, and cozy cafés make every corner feel like a scene from a painting. Paris is truly a place where romance and elegance meet.</p>
+                            <div class="wobble_container relative flex flex-col justify-center items-center" style="height: 70px">
+                                <a href="#" class="wobble_btn absolute inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                                    Read more
+                                    <svg class="rtl:rotate-180 w-3.5 h-3.5 ms-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9"/>
+                                    </svg>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="width: 30px"></div>
+
+                    <div class="max-w-sm bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700" style="flex: 0 0 auto; margin-right: 30px;">
+                        <a href="#">
+                            <img class="rounded-t-lg" style="height: 287px; width: 383px;" th:src="@{/images/switzerland2.jpg}" alt="" />
+                        </a>
+                        <div class="p-5">
+                            <a href="#">
+                                <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Switzerland</h5>
+                            </a>
+                            <p class="mb-3 font-normal text-gray-700 dark:text-gray-400">Switzerland is a breathtaking blend of snow-capped Alps, serene lakes, and charming villages. Majestic mountains frame crystal-clear waters, while picturesque towns like Lucerne and Interlaken offer a peaceful charm. With lush green valleys, scenic train journeys, and cozy alpine chalets, Switzerland feels like a fairytale come to life.</p>
+                            <div class="wobble_container relative flex flex-col justify-center items-center" style="height: 70px">
+                                <a href="#" class="wobble_btn absolute inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                                    Read more
+                                    <svg class="rtl:rotate-180 w-3.5 h-3.5 ms-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9"/>
+                                    </svg>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="width: 30px"></div>
+
+                    <div class="max-w-sm bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700" style="flex: 0 0 auto; margin-right: 30px;">
+                        <a href="#">
+                            <img class="rounded-t-lg" style="height: 287px; width: 383px;" th:src="@{/images/italy.jpg}" alt="" />
+                        </a>
+                        <div class="p-5">
+                            <a href="#">
+                                <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Italy</h5>
+                            </a>
+                            <p class="mb-3 font-normal text-gray-700 dark:text-gray-400">
+                                Italy is a captivating tapestry of ancient ruins, vibrant cities, and stunning landscapes. From the historic wonders of Rome to the romantic canals of Venice and the art-filled streets of Florence, Italy pulses with culture and beauty. Rolling vineyards in Tuscany, sun-soaked Amalfi coastlines, and charming villages showcase the country’s diverse landscapes, each inviting you to savor the Italian way of life—filled with passion, flavor, and timeless charm.</p>
+                            <div class="wobble_container relative flex flex-col justify-center items-center" style="height: 70px">
+                                <a href="#" class="wobble_btn absolute inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                                    Read more
+                                    <svg class="rtl:rotate-180 w-3.5 h-3.5 ms-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9"/>
+                                    </svg>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="width: 30px"></div>
+
+                    <div class="max-w-sm bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700" style="flex: 0 0 auto; margin-right: 30px;">
+                        <a href="#">
+                            <img class="rounded-t-lg" style="height: 287px; width: 383px;" th:src="@{/images/iceland.jpg}" alt="" />
+                        </a>
+                        <div class="p-5">
+                            <a href="#">
+                                <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Iceland</h5>
+                            </a>
+                            <p class="mb-3 font-normal text-gray-700 dark:text-gray-400">
+                                Iceland is a land of raw, otherworldly beauty where nature reigns supreme. Towering waterfalls, black sand beaches, and sprawling glaciers create a landscape that feels almost magical. Geysers erupt, volcanoes shape the land, and the northern lights dance across dark winter skies, illuminating the vast, untouched wilderness. Iceland is a place where fire and ice coexist, offering an awe-inspiring escape into nature's most dramatic displays.</p>
+                            <div class="wobble_container relative flex flex-col justify-center items-center" style="height: 70px">
+                                <a href="#" class="wobble_btn absolute inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                                    Read more
+                                    <svg class="rtl:rotate-180 w-3.5 h-3.5 ms-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9"/>
+                                    </svg>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="width: 30px"></div>
+
+                    <div class="max-w-sm bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700" style="flex: 0 0 auto; margin-right: 30px;">
+                        <a href="#">
+                            <img class="rounded-t-lg" style="height: 287px; width: 383px;" th:src="@{/images/germany.jpg}" alt="" />
+                        </a>
+                        <div class="p-5">
+                            <a href="#">
+                                <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Germany</h5>
+                            </a>
+                            <p class="mb-3 font-normal text-gray-700 dark:text-gray-400">
+                                Germany is a captivating mix of history, culture, and natural beauty. Medieval castles crown lush river valleys, bustling cities like Berlin and Munich blend modernity with tradition, and quaint villages dot the scenic countryside. The Black Forest, fairy-tale castles, and the Alps showcase Germany's diverse landscapes. From vibrant festivals and historic landmarks to charming streets and rich culinary traditions, Germany invites you to experience its blend of heritage and innovation.</p>
+                            <div class="wobble_container relative flex flex-col justify-center items-center" style="height: 70px">
+                                <a href="#" class="wobble_btn absolute inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                                    Read more
+                                    <svg class="rtl:rotate-180 w-3.5 h-3.5 ms-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9"/>
+                                    </svg>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script th:src="@{/js/wobble.js}"></script>
+<script>
+    $(document).ready(() => {
+        // Datepicker initialization
+        $('#datepicker').datepicker({
+            dateFormat: 'yy-mm-dd',
+            minDate: 0 // Prevent selection of past dates
+        });
+
+        // Autocomplete for 'from' and 'to' fields
+        $('#from-search').autocomplete({
+            source: function(req, res){
+                $.ajax({
+                    url:"/user/dashboard/airportSearch",
+                    dataType: "json",
+                    type:"GET",
+                    data: { term: req.term },
+                    success: function (data){
+                        console.log("Data received: ", data); // Debugging log
+                        res($.map(data, function(el){
+                            return {
+                                label: el.cityName + ' (' + el.iataCode + ')',
+                                value: el.iataCode
+                            }
+                        }));
+                    },
+                    error: function(err){
+                        console.log("Error: ", err.status);
+                    }
+                });
+            }
+        });
+
+        $('#to-search').autocomplete({
+            source: function(req, res){
+                $.ajax({
+                    url:"/user/dashboard/airportSearch",
+                    dataType: "json",
+                    type:"GET",
+                    data: { term: req.term },
+                    success: function (data){
+                        console.log("Data received: ", data); // Debugging log
+                        res($.map(data, function(el){
+                            return {
+                                label: el.cityName + ' (' + el.iataCode + ')',
+                                value: el.iataCode
+                            }
+                        }));
+                    },
+                    error: function(err){
+                        console.log("Error: ", err.status);
+                    }
+                });
+            }
+        });
+    });
+    // function confirmPrice() {
+    //     const form = document.getElementById('confirmPriceForm');
+    //     const flightOffer = form.querySelector('input[name="flightOffer"]').value;
+    //     const actionUrl = form.getAttribute('action');
+    //
+    //     fetch(actionUrl, {
+    //         method: 'POST',
+    //         headers: {
+    //             'Content-Type': 'application/json'
+    //         },
+    //         body: JSON.stringify({ flightOffer: flightOffer })
+    //     })
+    //         .then(response => response.text())
+    //         .then(data => {
+    //             alert(data);
+    //         })
+    //         .catch(error => {
+    //             console.error('Error:', error);
+    //         });
+    // }
+</script>
+
+</body>
+</html>

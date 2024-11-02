@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: et
+  devtools:
+    restart:
+      enabled: true
+
+  datasource:
+    url: jdbc:mariadb://localhost:3306/wanderlust
+    driver-class-name: org.mariadb.jdbc.Driver
+    username: root
+    password: Thakur@7
+
+  jpa:
+    hibernate:
+      dialect: org.hibernate.dialect.MariaDBDialect
+      ddl-auto: update
+    generate-ddl: true
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+
+
+app:
+  default-profile-pic: "/images/default.webp"
+
+ipinfo:
+  token: "693a837862bc78"
+
+aviationstack:
+  base_url: "http://api.aviationstack.com/v1"
+  access_key: "fae14eaeb2cbe1b80e8cf6c5ecc96d0c"
+
+amadeus:
+  apikey: "A58nIpRID9sWCIOpYEUMS58cD61er0Dd"
+  apisecret: "PMtOmDMvVqrrWWCW"
+  baseurl: "test.api.amadeus.com/v1"
